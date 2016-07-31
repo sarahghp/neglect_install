@@ -1,4 +1,8 @@
+// Board setup
+var board = p5.board('/dev/cu.usbmodem1421', 'arduino'),
+    firstBook = board.pin(0, 'VRES', 'INPUT');
 
+// Chart setup
 var g_cfg = {
   chartNum: 0,
   chartW: 220,
@@ -6,10 +10,13 @@ var g_cfg = {
   titlePadding: 20,
   squareSize: 20,
   colHeight: 400,
-  intervalId: undefined
+  counter: 0,
+  intervalId: undefined,
+  lastDown: undefined
 };
 
-var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'];
+var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
+    pins  = [firstBook, undefined, undefined, undefined];
 
 // Generate charts
 
@@ -31,7 +38,8 @@ var charts = _.map(fills, function(fill, i){
   });
 
   var atts = Object.assign({}, g_cfg, { 
-    chartNum: i, 
+    chartNum: i,
+    pin: pins[i], 
     colsArray: cols, 
     numCols: numCols, 
     numRows: numRows });
@@ -68,8 +76,14 @@ function makeBigRect(data){
       div.class('chart');
       canvas.parent(div);
 
+      // sensors
+      data.pin && data.pin.threshold(1000);
+      data.pin && data.pin.read();
+
       // perfomance shenanigans
+
       p.frameRate(10);
+
     }; // setup
 
     p.draw = function() {
@@ -79,7 +93,10 @@ function makeBigRect(data){
       _.forEach(data.colsArray, function(col){
         p.fill(col.fill);
         p.rect(col.x, col.y, data.squareSize, col.height);
-      })
+      });
+
+      data.pin && forceState(data);
+
     } // draw
 
     p.keyPressed = function() {
@@ -88,8 +105,42 @@ function makeBigRect(data){
       } else if (p.keyCode == p.RIGHT_ARROW){
         fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
       } else if (p.keyCode == p.UP_ARROW){
-        refill(data.colsArray, data.numCols, data.intervalId);
+        refill(data.colsArray, data.numCols, data);
       }
+      else if (p.keyCode == p.DOWN_ARROW){
+        if (data.pin) {
+          console.log('value', data.pin.val, 'over?', data.pin.overThreshold());
+        }
+      }
+    }
+
+    // Calibration
+    function forceState(data){
+
+      if (data.pin.overThreshold()) {
+        console.log('over');
+        ++data.counter;
+      } else {
+        data.counter = 0;
+        data.lastDown = undefined;
+        refill(data.colsArray, data.numCols, data);
+      }
+
+      if (data.counter > 50) {
+        data.lastDown = data.lastDown ? data.lastDown : Date.now();
+        var diff = Date.now() - data.lastDown;
+        console.log('diff', diff);
+
+        window.clearInterval(data.intervalId);
+        data.intervalId = undefined;
+
+        if (diff > 5000 && Math.round(diff/1000) % 5 === 0) {
+          console.log('Fade.');
+          fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
+        }
+
+      }
+
     }
 
 
@@ -99,7 +150,7 @@ function makeBigRect(data){
         fill: 'hsla(360, 100%, 100%, 0.6)',
         x: columnsArray[randomInt(0, numCols)].x,
         y: randomInt(0, numRows) * data.squareSize,
-        height: (p.random() > 0.7 ? 0.5 : 1) * data.squareSize,
+        height: (p.random() > 0.65 ? 0.5 : 1) * data.squareSize,
         type: 'fade'
       });
 
@@ -121,11 +172,11 @@ function makeBigRect(data){
       columnsArray.push(newSq);
     }
 
-    function refill(columnsArray, numCols, intervalId){
+    function refill(columnsArray, numCols, data){
       // var timing = 120000 / (columnsArray.length - numCols); // over 2 minutes
-      var timing = 200; // for testing
-      if (intervalId == undefined) {
-        intervalId = setInterval(popTilDone.bind(this),  timing);
+      var timing = 2000; // for testing
+      if (data.intervalId == undefined) {
+        data.intervalId = setInterval(popTilDone.bind(this),  timing);
         _.forEach(columnsArray, function(col){
           col.yCount = 0;
         }) 
@@ -135,8 +186,8 @@ function makeBigRect(data){
         if (columnsArray.length > numCols) {
           columnsArray.pop();
         } else {
-          window.clearInterval(intervalId);
-          intervalId = undefined;
+          window.clearInterval(data.intervalId);
+          data.intervalId = undefined;
         } 
       }
 
