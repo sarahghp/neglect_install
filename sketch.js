@@ -12,7 +12,7 @@ if (HARDWARE) {
 // Chart setup
 var g_cfg = {
   chartNum: 0,
-  chartW: 220,
+  chartW: 260,
   chartH: 400,
   titlePadding: 20,
   squareSize: 20,
@@ -23,7 +23,17 @@ var g_cfg = {
 };
 
 var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
-    pins  = [firstBook, secondBook, thirdBook, fourthBook];
+    pins  = [firstBook, secondBook, thirdBook, fourthBook],
+    books = [
+      { title: "Title One",
+        date: 1950},
+      { title: "Title Two",
+        date: 1856},
+      { title: "Title Three",
+        date: 2003},
+      { title: "Title Four",
+        date: 1972}
+    ];
 
 // Generate charts
 
@@ -48,7 +58,8 @@ var charts = _.map(fills, function(fill, i){
     pin: pins[i], 
     colsArray: cols, 
     numCols: numCols, 
-    numRows: numRows });
+    numRows: numRows,
+    book: books[i] });
 
 
   return atts;
@@ -74,10 +85,17 @@ function makeBigRect(data){
 
       var textDiv = p.createDiv('');
       textDiv.parent(div);
+      textDiv.class('text');
 
-      var text = p.createP('This is a test.\n <hr>');
-      text.style('width:' + data.chartW);
+      var text = p.createSpan(data.book.title);
       text.parent(textDiv);
+
+      var span = p.createSpan(data.book.date);
+      span.parent(textDiv);
+
+      var hr = p.createDiv('\n <hr>');
+      hr.parent(div);
+      hr.class('hr');
 
       div.class('chart');
       canvas.parent(div);
