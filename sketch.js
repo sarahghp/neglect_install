@@ -1,6 +1,13 @@
 // Board setup
-var board = p5.board('/dev/cu.usbmodem1421', 'arduino'),
-    firstBook = board.pin(0, 'VRES', 'INPUT');
+var HARDWARE = false;
+
+if (HARDWARE) {
+  var board = p5.board('/dev/cu.usbmodem1421', 'arduino'),
+      firstBook   = board.pin(0, 'VRES'),
+      secondBook  = board.pin(1, 'VRES'),
+      thirdBook   = board.pin(2, 'VRES'),
+      fourthBook  = board.pin(3, 'VRES');
+}
 
 // Chart setup
 var g_cfg = {
@@ -16,7 +23,7 @@ var g_cfg = {
 };
 
 var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
-    pins  = [firstBook, undefined, undefined, undefined];
+    pins  = [firstBook, secondBook, thirdBook, fourthBook];
 
 // Generate charts
 
@@ -32,8 +39,7 @@ var charts = _.map(fills, function(fill, i){
       x: g_cfg.squareSize * idx,
       y: 0,
       yCount: 0,
-      height: g_cfg.chartH,
-      type: 'full'
+      height: g_cfg.chartH
     });
   });
 
@@ -77,8 +83,10 @@ function makeBigRect(data){
       canvas.parent(div);
 
       // sensors
-      data.pin && data.pin.threshold(1000);
-      data.pin && data.pin.read();
+      if (HARDWARE) {
+        data.pin && data.pin.threshold(300);
+        data.pin && data.pin.read();        
+      }
 
       // perfomance shenanigans
 
@@ -95,7 +103,10 @@ function makeBigRect(data){
         p.rect(col.x, col.y, data.squareSize, col.height);
       });
 
-      data.pin && forceState(data);
+      if (HARDWARE) {
+        data.pin && forceState(data);
+      }
+      
 
     } // draw
 
@@ -134,7 +145,7 @@ function makeBigRect(data){
         window.clearInterval(data.intervalId);
         data.intervalId = undefined;
 
-        if (diff > 5000 && Math.round(diff/1000) % 5 === 0) {
+        if (diff > 5000 && Math.round(diff/1000) % 3 === 0) {
           console.log('Fade.');
           fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
         }
@@ -151,7 +162,6 @@ function makeBigRect(data){
         x: columnsArray[randomInt(0, numCols)].x,
         y: randomInt(0, numRows) * data.squareSize,
         height: (p.random() > 0.65 ? 0.5 : 1) * data.squareSize,
-        type: 'fade'
       });
 
       columnsArray.push(newSq);
@@ -166,7 +176,6 @@ function makeBigRect(data){
         x: chosenCol.x,
         y: data.colHeight - (data.squareSize * chosenCol.yCount),
         height: data.squareSize * chosenCol.yCount,
-        type: 'empty'
       });
 
       columnsArray.push(newSq);
@@ -174,7 +183,7 @@ function makeBigRect(data){
 
     function refill(columnsArray, numCols, data){
       // var timing = 120000 / (columnsArray.length - numCols); // over 2 minutes
-      var timing = 2000; // for testing
+      var timing = 500; // for testing
       if (data.intervalId == undefined) {
         data.intervalId = setInterval(popTilDone.bind(this),  timing);
         _.forEach(columnsArray, function(col){
