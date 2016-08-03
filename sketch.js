@@ -19,7 +19,16 @@ var g_cfg = {
   colHeight: 400,
   counter: 0,
   intervalId: undefined,
-  lastDown: undefined
+  lastDown: undefined,
+  textDiv: undefined,
+  texts: {
+    full: 'are you fulfilled?',
+    justFilled: '♡♥♡♥♡♥♡♥♡',
+    fading: 'read me read me',
+    danger: 'i don\'t feel so great',
+    imminent: 'urgh',
+    dead: 'you monsters' 
+  }
 };
 
 var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
@@ -83,15 +92,12 @@ function makeBigRect(data){
 
       // text
 
-      var textDiv = p.createDiv('');
-      textDiv.parent(div);
-      textDiv.class('text');
+      data.textDiv = p.createDiv('');
+      data.textDiv.parent(div);
+      data.textDiv.class('text');
+      data.textDiv.id('text_'+ data.chartNum);
 
-      var text = p.createSpan(data.book.title);
-      text.parent(textDiv);
-
-      var span = p.createSpan(data.book.date);
-      span.parent(textDiv);
+      baseText(data, data.textDiv);
 
       var hr = p.createDiv('\n <hr>');
       hr.parent(div);
@@ -99,7 +105,7 @@ function makeBigRect(data){
 
       div.class('chart');
       canvas.parent(div);
-
+      
       // sensors
       if (HARDWARE) {
         data.pin && data.pin.threshold(300);
@@ -124,10 +130,13 @@ function makeBigRect(data){
       if (HARDWARE) {
         data.pin && forceState(data);
       }
+
+      textState(data, '#text_' + data.chartNum);
       
 
     } // draw
 
+    // Use keypress to test that time-triggered functions are working
     p.keyPressed = function() {
       if (p.keyCode == p.LEFT_ARROW){
         fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
@@ -140,10 +149,53 @@ function makeBigRect(data){
         if (data.pin) {
           console.log('value', data.pin.val, 'over?', data.pin.overThreshold());
         }
+
+        textFlash(data.texts.justFilled, '#text_' + data.chartNum, data)
       }
     }
 
-    // Calibration
+    // Text
+    function baseText(data){
+
+      // Always clear the div before adding content again
+      data.textDiv.elt.textContent = '';
+      
+      var text = p.createSpan(data.book.title);
+      text.parent(data.textDiv);
+
+      var span = p.createSpan(data.book.date);
+      span.parent(data.textDiv);
+
+    }
+
+    function textFlash(text, selector, data){
+      
+      var container = p.select(selector);
+      container.elt.textContent = text;
+
+      function restore(){
+        baseText(data, data.textDiv);
+      }
+
+      setTimeout(restore, 400);
+    }
+
+    function textState(data, selector){
+
+      var go = Math.round(Date.now()) % (data.chartNum + 300) === 3;
+
+      // console.log(go);
+
+      if (go){
+        var category = getCategory(data.colsArray.length, data.numCols, data.numCols * data.numRows);
+        var text = data.texts[category];
+        textFlash(text, selector, data);
+      }
+
+    }
+
+
+    // Moth-eating
     function forceState(data){
 
       if (data.pin.overThreshold()) {
@@ -170,7 +222,7 @@ function makeBigRect(data){
 
       }
 
-    }
+    } // forceState
 
 
     // Maniuplation fns
@@ -217,8 +269,8 @@ function makeBigRect(data){
           data.intervalId = undefined;
         } 
       }
-
     } // refill
+
 
   } // chart
 
@@ -229,4 +281,27 @@ function makeBigRect(data){
 
 function randomInt(a, b) { 
   return Math.floor((Math.random() * (b - a)) + a);
+}
+
+function getCategory(num, min, max){
+  switch(true){
+    case (num > min && num <= 0.4 * max):
+      return 'fading';
+      break;
+
+    case (num > 0.4 * max && num <= 0.8 * max):
+      return 'danger';
+      break;
+
+    case (num > 0.8 * max && num <= 0.89 * max):
+      return 'imminent';
+      break;
+
+    case (num > 0.89 * max):
+      return 'dead';
+      break;
+
+    default:
+      return 'full';
+  }
 }
