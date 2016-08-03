@@ -1,5 +1,6 @@
 // Board setup
 var HARDWARE = false;
+var STATS = true;
 
 if (HARDWARE) {
   var board = p5.board('/dev/cu.usbmodem1421', 'arduino'),
@@ -35,13 +36,21 @@ var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
     pins  = [firstBook, secondBook, thirdBook, fourthBook],
     books = [
       { title: "Title One",
-        date: 1950},
+        date: 1950,
+        pages: 400,
+        price: 12.50 },
       { title: "Title Two",
-        date: 1856},
+        date: 1856,
+        pages: 400,
+        price: 12.50 },
       { title: "Title Three",
-        date: 2003},
+        date: 2003,
+        pages: 400,
+        price: 12.50 },
       { title: "Title Four",
-        date: 1972}
+        date: 1972,
+        pages: 400,
+        price: 12.50 }
     ];
 
 // Generate charts
@@ -85,26 +94,35 @@ function makeBigRect(data){
 
     p.setup = function() {
 
-      // canvas
+      // layout
 
       var canvas = p.createCanvas(data.chartW, data.chartH),
           div = p.createDiv('');
 
-      // text
-
       data.textDiv = p.createDiv('');
-      data.textDiv.parent(div);
-      data.textDiv.class('text');
       data.textDiv.id('text_'+ data.chartNum);
 
-      baseText(data, data.textDiv);
+      if (STATS) {
+        div.class('chart');
+        canvas.parent(div);
 
-      var hr = p.createDiv('\n <hr>');
-      hr.parent(div);
-      hr.class('hr');
+        data.textDiv.parent(div);
+        data.textDiv.class('stats');
+        baseText(data, data.textDiv);
+      
+      } else {
 
-      div.class('chart');
-      canvas.parent(div);
+        data.textDiv.parent(div);
+        data.textDiv.class('text');
+        baseText(data, data.textDiv);
+
+        var hr = p.createDiv('\n <hr>');
+        hr.parent(div);
+        hr.class('hr');
+
+        div.class('chart');
+        canvas.parent(div);
+      }
       
       // sensors
       if (HARDWARE) {
@@ -131,7 +149,12 @@ function makeBigRect(data){
         data.pin && forceState(data);
       }
 
-      textState(data, '#text_' + data.chartNum);
+      if (STATS) {
+        textState(data, '#title_' + data.chartNum);
+      } else {
+        textState(data, '#text_' + data.chartNum);
+      }
+      
       
 
     } // draw
@@ -150,7 +173,13 @@ function makeBigRect(data){
           console.log('value', data.pin.val, 'over?', data.pin.overThreshold());
         }
 
-        textFlash(data.texts.justFilled, '#text_' + data.chartNum, data)
+        if (STATS) {
+          textFlash(data.texts.justFilled, '#title_' + data.chartNum, data)
+        } else {
+          textFlash(data.texts.justFilled, '#text_' + data.chartNum, data);
+        }
+
+        
       }
     }
 
@@ -159,12 +188,32 @@ function makeBigRect(data){
 
       // Always clear the div before adding content again
       data.textDiv.elt.textContent = '';
-      
-      var text = p.createSpan(data.book.title);
-      text.parent(data.textDiv);
 
-      var span = p.createSpan(data.book.date);
-      span.parent(data.textDiv);
+      if (STATS) {
+        var text = p.createP(data.book.title);
+        text.parent(data.textDiv);
+        text.id('title_' + data.chartNum)
+
+        var date = p.createP('Published ' + data.book.date);
+        date.parent(data.textDiv);
+        date.class('sub');
+
+        var pages = p.createP(data.book.pages  + ' pages');
+        pages.parent(data.textDiv);
+        pages.class('sub');
+
+        var price = p.createP('Purchased for ' + data.book.price.toLocaleString('en-US', {style: 'currency', currency: 'USD'}));
+        price.parent(data.textDiv);
+        price.class('sub');
+        
+      } else {
+        var text = p.createSpan(data.book.title);
+        text.parent(data.textDiv);
+
+        var span = p.createSpan(data.book.date);
+        span.parent(data.textDiv); 
+      }
+      
 
     }
 
@@ -177,7 +226,7 @@ function makeBigRect(data){
         baseText(data, data.textDiv);
       }
 
-      setTimeout(restore, 400);
+      setTimeout(restore, 500);
     }
 
     function textState(data, selector){
