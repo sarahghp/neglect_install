@@ -1,7 +1,50 @@
-// Board setup
+// Variation consts
 var HARDWARE = false;
 var STATS = true;
+var TEST_STATE = 'dev'; // options dev, short-long, long-long, show
 
+// Test configurations
+
+var decay = {
+  'dev': {
+    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
+    leadTime: 5000, // How long down (in ms) before we should start fading?
+    incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
+    incMod: 3,
+    totalRefill: 1000, // How long, in ms until a column is refilled
+    bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
+  },
+
+  'short-long': {
+    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
+    leadTime: 5000, // How long down (in ms) before we should start fading?
+    incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
+    incMod: 3,
+    totalRefill: 120000, // How long, in ms until a column is refilled
+    bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
+  },
+
+  'long-long': {
+    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
+    leadTime: 5000, // How long down (in ms) before we should start fading?
+    incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
+    incMod: 3,
+    totalRefill: 120000, // How long, in ms until a column is refilled
+    bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
+  },
+
+  'show': {
+    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
+    leadTime: 5000, // How long down (in ms) before we should start fading?
+    incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
+    incMod: 3,
+    totalRefill: 120000, // How long, in ms until a column is refilled
+    bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
+  },
+
+}
+
+// Board setup
 if (HARDWARE) {
   var board = p5.board('/dev/cu.usbmodem1421', 'arduino'),
       firstBook   = board.pin(0, 'VRES'),
@@ -246,6 +289,8 @@ function makeBigRect(data){
 
     // Moth-eating
     function forceState(data){
+      
+      var d = decay[TEST_STATE];
 
       if (data.pin.overThreshold()) {
         console.log('over');
@@ -256,7 +301,7 @@ function makeBigRect(data){
         refill(data.colsArray, data.numCols, data);
       }
 
-      if (data.counter > 50) {
+      if (data.counter > d.initBuffer) {
         data.lastDown = data.lastDown ? data.lastDown : Date.now();
         var diff = Date.now() - data.lastDown;
         console.log('diff', diff);
@@ -264,9 +309,15 @@ function makeBigRect(data){
         window.clearInterval(data.intervalId);
         data.intervalId = undefined;
 
-        if (diff > 5000 && Math.round(diff/1000) % 3 === 0) {
+        if (diff > d.leadTime && Math.round(diff/d.incDivisor) % d.incMod === 0) {
           console.log('Fade.');
-          fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
+
+          if (p.random() > decay[TEST_STATE].bottomChance) { // 1 in 20 chance of taking random square
+            fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
+          } else {
+            fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
+          }
+          
         }
 
       }
@@ -301,10 +352,11 @@ function makeBigRect(data){
     }
 
     function refill(columnsArray, numCols, data){
-      // var timing = 120000 / (columnsArray.length - numCols); // over 2 minutes
-      var timing = 500; // for testing
+      
+      var timing = decay[TEST_STATE].totalRefill / (columnsArray.length - numCols); 
+      
       if (data.intervalId == undefined) {
-        data.intervalId = setInterval(popTilDone.bind(this),  timing);
+        data.intervalId = setInterval(popTilDone.bind(this), timing);
         _.forEach(columnsArray, function(col){
           col.yCount = 0;
         }) 
