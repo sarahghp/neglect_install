@@ -1,5 +1,5 @@
 // Variation consts
-var HARDWARE = false;
+var HARDWARE = true;
 var STATS = true;
 var TEST_STATE = 'dev'; // options dev, short-long, long-long, show
 
@@ -7,8 +7,8 @@ var TEST_STATE = 'dev'; // options dev, short-long, long-long, show
 
 var decay = {
   'dev': {
-    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
-    leadTime: 5000, // How long down (in ms) before we should start fading?
+    initBuffer: 20, // How many cycles on the counter until the book is considered "down"?
+    leadTime: 2000, // How long down (in ms) before we should start fading?
     incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
     incMod: 3,
     totalRefill: 1000, // How long, in ms until a column is refilled
@@ -96,7 +96,7 @@ var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
         price: 12.50 }
     ];
 
-// Generate charts
+// Generate chart objects
 
 var charts = _.map(fills, function(fill, i){
 
@@ -128,6 +128,7 @@ var charts = _.map(fills, function(fill, i){
 
 console.log('Chart objects:', charts);
 
+// Actually draw charts
 _.forEach(charts, makeBigRect);
 
 // Draw little unit charts
@@ -312,7 +313,7 @@ function makeBigRect(data){
         if (diff > d.leadTime && Math.round(diff/d.incDivisor) % d.incMod === 0) {
           console.log('Fade.');
 
-          if (p.random() > decay[TEST_STATE].bottomChance) { // 1 in 20 chance of taking random square
+          if (p.random() > decay[TEST_STATE].bottomChance) { // 0.95 gives 1 in 20 chance of taking random square
             fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
           } else {
             fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
