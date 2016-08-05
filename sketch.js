@@ -10,7 +10,7 @@ var decay = {
     initBuffer: 20, // How many cycles on the counter until the book is considered "down"?
     leadTime: 2000, // How long down (in ms) before we should start fading?
     incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
-    incMod: 3,
+    incMod: 1,
     totalRefill: 1000, // How long, in ms until a column is refilled
     bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
   },
@@ -65,6 +65,8 @@ var g_cfg = {
   intervalId: undefined,
   lastDown: undefined,
   textDiv: undefined,
+  fullCols: [],
+  stopped: false,
   texts: {
     full: 'are you fulfilled?',
     justFilled: '♡♥♡♥♡♥♡♥♡',
@@ -208,7 +210,7 @@ function makeBigRect(data){
       if (p.keyCode == p.LEFT_ARROW){
         fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
       } else if (p.keyCode == p.RIGHT_ARROW){
-        fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
+        fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
       } else if (p.keyCode == p.UP_ARROW){
         refill(data.colsArray, data.numCols, data);
       }
@@ -277,8 +279,6 @@ function makeBigRect(data){
 
       var go = Math.round(Date.now()) % (data.chartNum + 300) === 3;
 
-      // console.log(go);
-
       if (go){
         var category = getCategory(data.colsArray.length, data.numCols, data.numCols * data.numRows);
         var text = data.texts[category];
@@ -299,13 +299,15 @@ function makeBigRect(data){
       } else {
         data.counter = 0;
         data.lastDown = undefined;
+        data.fullCols = [];
+        data.stopped = false;
         refill(data.colsArray, data.numCols, data);
       }
 
-      if (data.counter > d.initBuffer) {
+      if (data.counter > d.initBuffer && !data.stopped) {
         data.lastDown = data.lastDown ? data.lastDown : Date.now();
         var diff = Date.now() - data.lastDown;
-        console.log('diff', diff);
+        // console.log('diff', diff);
 
         window.clearInterval(data.intervalId);
         data.intervalId = undefined;
@@ -316,7 +318,7 @@ function makeBigRect(data){
           if (p.random() > decay[TEST_STATE].bottomChance) { // 0.95 gives 1 in 20 chance of taking random square
             fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
           } else {
-            fadeBottomSquare(data.colsArray, data.numCols, data.numRows);
+            fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
           }
           
         }
@@ -338,9 +340,14 @@ function makeBigRect(data){
       columnsArray.push(newSq);
     }
 
-    function fadeBottomSquare(columnsArray, numCols, numRows){
+    function fadeBottomSquare(columnsArray, numCols, numRows, data){
       var chosenCol = columnsArray[randomInt(0, numCols)];
       ++chosenCol.yCount;
+
+      if (chosenCol.yCount > numRows) {
+        data.fullCols[chosenCol.num] = true;
+        data.stopped = checkForFullCols(data);
+      }
 
       var newSq = Object.assign({}, {
         fill: 'hsla(360, 100%, 100%, 0.6)',
@@ -350,6 +357,18 @@ function makeBigRect(data){
       });
 
       columnsArray.push(newSq);
+    }
+
+    function checkForFullCols(data){
+      var full = true;
+
+      for (var i = 0; i < data.numCols; i++){
+        if (full && !data.fullCols[i]){
+          full = false;
+        }
+      }
+
+      return full;
     }
 
     function refill(columnsArray, numCols, data){
