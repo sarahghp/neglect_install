@@ -83,19 +83,19 @@ var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
       { title: "Title One",
         date: 1950,
         pages: 400,
-        price: 12.50 },
+        price: "$12.50" },
       { title: "Title Two",
         date: 1856,
         pages: 400,
-        price: 12.50 },
+        price: "$12.50" },
       { title: "Title Three",
         date: 2003,
         pages: 400,
-        price: 12.50 },
+        price: "$12.50" },
       { title: "Title Four",
         date: 1972,
         pages: 400,
-        price: 12.50 }
+        price: "$12.50" }
     ];
 
 // Generate chart objects
@@ -248,7 +248,7 @@ function makeBigRect(data){
         pages.parent(data.textDiv);
         pages.class('sub');
 
-        var price = p.createP('Purchased for ' + data.book.price.toLocaleString('en-US', {style: 'currency', currency: 'USD'}));
+        var price = p.createP('Purchased for ' + data.book.price);
         price.parent(data.textDiv);
         price.class('sub');
         
