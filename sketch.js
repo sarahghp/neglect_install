@@ -1,9 +1,17 @@
 // Variation consts
-var HARDWARE = true;
+var HARDWARE = false;
 var STATS = true;
 var TEST_STATE = 'dev'; // options dev, short-long, long-long, show
 
 // Test configurations
+
+// Uncomment the lines below to log ports to the console
+p5.serial().list(function(data) {
+  console.log('serial list:');
+  data.ports.forEach(function(port) {
+    console.log(port.comName);
+  });
+});
 
 var decay = {
   'dev': {
