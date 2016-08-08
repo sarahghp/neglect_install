@@ -1,17 +1,9 @@
 // Variation consts
-var HARDWARE = false;
+var HARDWARE = true;
 var STATS = true;
 var TEST_STATE = 'dev'; // options dev, short-long, long-long, show
 
 // Test configurations
-
-// Uncomment the lines below to log ports to the console
-p5.serial().list(function(data) {
-  console.log('serial list:');
-  data.ports.forEach(function(port) {
-    console.log(port.comName);
-  });
-});
 
 var decay = {
   'dev': {
@@ -64,11 +56,10 @@ if (HARDWARE) {
 // Chart setup
 var g_cfg = {
   chartNum: 0,
-  chartW: 260,
-  chartH: 400,
+  chartW: 400,
   titlePadding: 20,
   squareSize: 20,
-  colHeight: 400,
+  colHeight: 800,
   counter: 0,
   intervalId: undefined,
   lastDown: undefined,
@@ -110,7 +101,7 @@ var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
 
 var charts = _.map(fills, function(fill, i){
 
-  var numRows = Math.floor(g_cfg.chartH / g_cfg.squareSize),
+  var numRows = Math.floor(g_cfg.colHeight / g_cfg.squareSize),
       numCols = Math.floor(g_cfg.chartW / g_cfg.squareSize);
   
   var cols = _.times(numCols, function(idx){
@@ -120,7 +111,7 @@ var charts = _.map(fills, function(fill, i){
       x: g_cfg.squareSize * idx,
       y: 0,
       yCount: 0,
-      height: g_cfg.chartH
+      height: g_cfg.colHeight
     });
   });
 
@@ -150,7 +141,7 @@ function makeBigRect(data){
 
       // layout
 
-      var canvas = p.createCanvas(data.chartW, data.chartH),
+      var canvas = p.createCanvas(data.chartW, data.colHeight),
           div = p.createDiv('');
 
       data.textDiv = p.createDiv('');
@@ -356,6 +347,8 @@ function makeBigRect(data){
         data.fullCols[chosenCol.num] = true;
         data.stopped = checkForFullCols(data);
       }
+
+      console.log(data.colHeight, data.squareSize, chosenCol.yCount)
 
       var newSq = Object.assign({}, {
         fill: 'hsla(360, 100%, 100%, 0.6)',
