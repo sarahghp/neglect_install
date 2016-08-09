@@ -1,7 +1,7 @@
 // Variation consts
-var HARDWARE = true;
+var HARDWARE = false;
 var STATS = true;
-var TEST_STATE = 'dev'; // options dev, short-long, long-long, show
+var TEST_STATE = 'short-long'; // options dev, short-long, long-long, show
 
 // Test configurations
 
@@ -47,10 +47,10 @@ var decay = {
 // Board setup
 if (HARDWARE) {
   var board = p5.board('/dev/cu.usbmodem1421', 'arduino'),
-      firstBook   = board.pin(0, 'VRES'),
-      secondBook  = board.pin(1, 'VRES'),
-      thirdBook   = board.pin(2, 'VRES'),
-      fourthBook  = board.pin(3, 'VRES');
+      firstBook   = board.pin(3, 'VRES'),
+      secondBook  = board.pin(2, 'VRES'),
+      thirdBook   = board.pin(1, 'VRES'),
+      fourthBook  = board.pin(0 , 'VRES');
 }
 
 // Chart setup
@@ -76,25 +76,29 @@ var g_cfg = {
   }
 };
 
-var fills = ['#9ae8d2', '#ff8993', '#b977d3', '#fff055'],
+var fills = ['#9ae8d2', '#ff8993', '#fff055', '#b977d3'],
     pins  = [firstBook, secondBook, thirdBook, fourthBook],
     books = [
-      { title: "Title One",
-        date: 1950,
-        pages: 400,
-        price: "$12.50" },
-      { title: "Title Two",
-        date: 1856,
-        pages: 400,
-        price: "$12.50" },
-      { title: "Title Three",
-        date: 2003,
-        pages: 400,
-        price: "$12.50" },
-      { title: "Title Four",
-        date: 1972,
-        pages: 400,
-        price: "$12.50" }
+      { title: 'The Big Sleep/Farewell My Lovely',
+        date: '1939/1940',
+        pages: 544,
+        dimension: '5.1 x 1.4 x 7.6',
+        price: '16.13' },
+      { title: 'The Glass Cage',
+        date: 2014,
+        pages: 288,
+        dimension: '6.5 x 1 x 9.6',
+        price: '$5.35' },
+      { title: 'A Little Princess',
+        date: 1905,
+        pages: 320,
+        dimension: '5.2 x 1.0 x 7.3',
+        price: '$11.50' },
+      { title: 'The Book of Symbols',
+        date: 2010,
+        pages: 810,
+        dimension: '6.9 x 2.1 x 9.7',
+        price: '$28.15' }
     ];
 
 // Generate chart objects
@@ -247,6 +251,10 @@ function makeBigRect(data){
         pages.parent(data.textDiv);
         pages.class('sub');
 
+        var dim = p.createP(data.book.dimension);
+        dim.parent(data.textDiv);
+        dim.class('sub');
+
         var price = p.createP('Purchased for ' + data.book.price);
         price.parent(data.textDiv);
         price.class('sub');
@@ -348,8 +356,6 @@ function makeBigRect(data){
         data.stopped = checkForFullCols(data);
       }
 
-      console.log(data.colHeight, data.squareSize, chosenCol.yCount)
-
       var newSq = Object.assign({}, {
         fill: 'hsla(360, 100%, 100%, 0.6)',
         x: chosenCol.x,
@@ -374,13 +380,14 @@ function makeBigRect(data){
 
     function refill(columnsArray, numCols, data){
       
-      var timing = decay[TEST_STATE].totalRefill / (columnsArray.length - numCols); 
+      var timing = Math.round(decay[TEST_STATE].totalRefill / (columnsArray.length - numCols));
       
       if (data.intervalId == undefined) {
         data.intervalId = setInterval(popTilDone.bind(this), timing);
+        
         _.forEach(columnsArray, function(col){
           col.yCount = 0;
-        }) 
+        }); 
       }
 
       function popTilDone() {
