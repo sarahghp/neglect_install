@@ -1,7 +1,7 @@
 // Variation consts
 var HARDWARE = false;
 var STATS = true;
-var TEST_STATE = 'short-long'; // options dev, short-long, long-long, show
+var TEST_STATE = 'long-long'; // options dev, short-long, long-long, show
 
 // Test configurations
 
@@ -16,29 +16,29 @@ var decay = {
   },
 
   'short-long': {
-    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
+    initBuffer: 20, // How many cycles on the counter until the book is considered "down"?
     leadTime: 5000, // How long down (in ms) before we should start fading?
     incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
     incMod: 3,
     totalRefill: 120000, // How long, in ms until a column is refilled
-    bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
+    bottomChance: 0.97, // Chance a faded square is a bottom square as opposed to random
   },
 
   'long-long': {
-    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
-    leadTime: 5000, // How long down (in ms) before we should start fading?
+    initBuffer: 20, // How many cycles on the counter until the book is considered "down"?
+    leadTime: 2000, // How long down (in ms) before we should start fading?
     incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
-    incMod: 3,
-    totalRefill: 120000, // How long, in ms until a column is refilled
+    incMod: 50,
+    totalRefill: 400000, // How long, in ms until a column is refilled
     bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
   },
 
   'show': {
-    initBuffer: 50, // How many cycles on the counter until the book is considered "down"?
-    leadTime: 5000, // How long down (in ms) before we should start fading?
+    initBuffer: 20, // How many cycles on the counter until the book is considered "down"?
+    leadTime: 300, // How long down (in ms) before we should start fading?
     incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
     incMod: 3,
-    totalRefill: 120000, // How long, in ms until a column is refilled
+    totalRefill: 400000, // How long, in ms until a column is refilled
     bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
   },
 
@@ -46,7 +46,8 @@ var decay = {
 
 // Board setup
 if (HARDWARE) {
-  var board = p5.board('/dev/cu.usbmodem1421', 'arduino'),
+  // var board = p5.board('/dev/cu.usbmodem1421', 'arduino'), // mac
+  var board = p5.board('/dev/ttyACM0', 'arduino'), // pi
       firstBook   = board.pin(3, 'VRES'),
       secondBook  = board.pin(2, 'VRES'),
       thirdBook   = board.pin(1, 'VRES'),
@@ -126,7 +127,6 @@ var charts = _.map(fills, function(fill, i){
     numCols: numCols, 
     numRows: numRows,
     book: books[i] });
-
 
   return atts;
 });
@@ -312,6 +312,7 @@ function makeBigRect(data){
       }
 
       if (data.counter > d.initBuffer && !data.stopped) {
+        
         data.lastDown = data.lastDown ? data.lastDown : Date.now();
         var diff = Date.now() - data.lastDown;
         // console.log('diff', diff);
@@ -319,17 +320,30 @@ function makeBigRect(data){
         window.clearInterval(data.intervalId);
         data.intervalId = undefined;
 
-        if (diff > d.leadTime && Math.round(diff/d.incDivisor) % d.incMod === 0) {
-          console.log('Fade.');
+        // Hacky way to set long-death
+        if (data.chartNum == 2) {
+          if (diff > d.leadTime && Math.round(diff/1000) % 3240 === 0) {
 
-          if (p.random() > decay[TEST_STATE].bottomChance) { // 0.95 gives 1 in 20 chance of taking random square
-            fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
-          } else {
-            fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
+            if (p.random() > decay[TEST_STATE].bottomChance) { // 0.95 gives 1 in 20 chance of taking random square
+              fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
+            } else {
+              fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
+            }
+            
           }
-          
-        }
+        } else { 
 
+          if (diff > d.leadTime && Math.round(diff/d.incDivisor) % d.incMod === 0) {
+            console.log('Fade.');
+
+            if (p.random() > decay[TEST_STATE].bottomChance) { // 0.95 gives 1 in 20 chance of taking random square
+              fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
+            } else {
+              fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
+            }
+            
+          }
+        }
       }
 
     } // forceState
