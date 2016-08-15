@@ -60,7 +60,7 @@ var g_cfg = {
   chartW: 260,
   titlePadding: 20,
   squareSize: 10,
-  colHeight: 480,
+  colHeight: 500,
   counter: 0,
   intervalId: undefined,
   lastDown: undefined,
