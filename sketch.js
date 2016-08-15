@@ -57,10 +57,10 @@ if (HARDWARE) {
 // Chart setup
 var g_cfg = {
   chartNum: 0,
-  chartW: 400,
+  chartW: 260,
   titlePadding: 20,
-  squareSize: 20,
-  colHeight: 800,
+  squareSize: 10,
+  colHeight: 480,
   counter: 0,
   intervalId: undefined,
   lastDown: undefined,
@@ -146,7 +146,10 @@ function makeBigRect(data){
       // layout
 
       var canvas = p.createCanvas(data.chartW, data.colHeight),
+          cont = p.select('.chartWrapper'),
           div = p.createDiv('');
+
+      div.parent(cont);
 
       data.textDiv = p.createDiv('');
       data.textDiv.id('text_'+ data.chartNum);
