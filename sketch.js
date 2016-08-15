@@ -60,7 +60,7 @@ var g_cfg = {
   chartW: 260,
   titlePadding: 20,
   squareSize: 10,
-  colHeight: 500,
+  colHeight: 480,
   counter: 0,
   intervalId: undefined,
   lastDown: undefined,
@@ -80,7 +80,7 @@ var g_cfg = {
 var fills = ['#9ae8d2', '#ff8993', '#fff055', '#b977d3'],
     pins  = [firstBook, secondBook, thirdBook, fourthBook],
     books = [
-      { title: 'The Big Sleep/Farewell My Lovely',
+      { title: 'The Big Sleep',
         date: '1939/1940',
         pages: 544,
         dimension: '5.1 x 1.4 x 7.6',
