@@ -1,5 +1,5 @@
 // Variation consts
-var HARDWARE = false;
+var HARDWARE = true;
 var STATS = true;
 var TEST_STATE = 'show'; // options dev, short-long, long-long, show
 
