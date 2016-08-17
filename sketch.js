@@ -1,5 +1,5 @@
 // Variation consts
-var HARDWARE = true;
+var HARDWARE = false;
 var STATS = true;
 var TEST_STATE = 'show'; // options dev, short-long, long-long, show
 
@@ -37,8 +37,8 @@ var decay = {
     initBuffer: 20, // How many cycles on the counter until the book is considered "down"?
     leadTime: 300, // How long down (in ms) before we should start fading?
     incDivisor: 1000, // Used with incMod to define cycle length (see forceState fn)
-    incMod: 3,
-    totalRefill: 400000, // How long, in ms until a column is refilled
+    incMod: 100,
+    totalRefill: 30000, // How long, in ms until a column is refilled
     bottomChance: 0.95, // Chance a faded square is a bottom square as opposed to random
   },
 
@@ -201,6 +201,10 @@ function makeBigRect(data){
         data.pin && forceState(data);
       }
 
+      if (data.overThresholdTest) {
+        forceState(data);
+      }
+
       if (STATS) {
         textState(data, '#title_' + data.chartNum);
       } else {
@@ -216,7 +220,9 @@ function makeBigRect(data){
       if (p.keyCode == p.LEFT_ARROW){
         fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
       } else if (p.keyCode == p.RIGHT_ARROW){
-        fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
+        // fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
+        data.overThresholdTest = true;
+
       } else if (p.keyCode == p.UP_ARROW){
         refill(data.colsArray, data.numCols, data);
       }
@@ -268,9 +274,7 @@ function makeBigRect(data){
 
         var span = p.createSpan(data.book.date);
         span.parent(data.textDiv); 
-      }
-      
-
+      }      
     }
 
     function textFlash(text, selector, data){
@@ -294,7 +298,6 @@ function makeBigRect(data){
         var text = data.texts[category];
         textFlash(text, selector, data);
       }
-
     }
 
 
@@ -303,7 +306,7 @@ function makeBigRect(data){
       
       var d = decay[TEST_STATE];
 
-      if (data.pin.overThreshold()) {
+      if (data.overThresholdTest || data.pin.overThreshold()) {
         console.log('over');
         ++data.counter;
       } else {
@@ -325,7 +328,13 @@ function makeBigRect(data){
 
         // Hacky way to set long-death
         if (data.chartNum == 2) {
-          if (diff > d.leadTime && Math.round(diff/1000) % 3240 === 0) {
+
+          if (diff > d.leadTime && diff < d.leadTime * 3) {
+
+            console.log('Fast fade.');
+            fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
+
+          } else if (diff > d.leadTime && Math.round(diff/1000) % 3240 === 0) {
 
             if (p.random() > decay[TEST_STATE].bottomChance) { // 0.95 gives 1 in 20 chance of taking random square
               fadeRandomSquare(data.colsArray, data.numCols, data.numRows);
@@ -334,9 +343,12 @@ function makeBigRect(data){
             }
             
           }
-        } else { 
+        } else {
 
-          if (diff > d.leadTime && Math.round(diff/d.incDivisor) % d.incMod === 0) {
+          if (diff > d.leadTime && diff < d.leadTime * 3) {
+            console.log('Fast fade.');
+            fadeBottomSquare(data.colsArray, data.numCols, data.numRows, data);
+          } else if (diff > d.leadTime && Math.round(diff/d.incDivisor) % d.incMod === 0) {
             console.log('Fade.');
 
             if (p.random() > decay[TEST_STATE].bottomChance) { // 0.95 gives 1 in 20 chance of taking random square
